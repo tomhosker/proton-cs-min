@@ -1,77 +1,151 @@
+/*
+This code defines a namespace, which produces a program, which reads data
+from a Proton RFID reader, and prints it both to the screen and to a plain
+text file.
+*/
+
+// Imports.
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO.Ports;
 using com.caen.RFIDLibrary;
+
+// The namespace in question.
 namespace ConsoleApplication1
 {
-    class Program
+  // The class in question.
+  class Program
+  {
+    /***********
+    ** FIELDS **
+    ***********/
+
+    // Constants.
+    const String readerIP = "192.168.0.2";
+
+    private CAENRFIDReader myReader = new CAENRFIDReader();
+    private CAENRFIDLogicalSource mySource;
+    private CAENRFIDLogicalSource mySource2;
+    private CAENRFIDTag[] myTags;
+    private CAENRFIDTag[] myTags2;
+    private String printoutFilename =
+      "output"+DateTime.Now.ToString("d-M-yyyy")+".txt";
+
+    /*****************
+    ** CORE METHODS **
+    *****************/
+
+    // Set up myReader, mySource and mySource2.
+    void Initialise()
     {
-        static void Main(string[] args)
-        {
-            CAENRFIDReader MyReader = new CAENRFIDReader();
-
-            MyReader.Connect(CAENRFIDPort.CAENRFID_TCP, "192.168.0.2");
-
-            CAENRFIDLogicalSource MySource = MyReader.GetSource("Source_0");
-            CAENRFIDLogicalSource MySource2 = MyReader.GetSource("Source_1");
-
-
-            Console.WriteLine("Press ESC to stop");
-            do
-            {
-                while (!Console.KeyAvailable)
-                {
-                    CAENRFIDTag[] MyTags = MySource.InventoryTag();
-                    CAENRFIDTag[] MyTags2 = MySource2.InventoryTag();
-
-                    if (MyTags != null)
-                    {                   
-                        for (int i = 0; i < MyTags.Length; i++)
-                        {
-                
-                            byte[] data = FromHex(BitConverter.ToString(MyTags[i].GetId()));
-                            String s = Encoding.ASCII.GetString(data) + " " + DateTime.Now.ToString("h:mm:ss") + " " + MyTags[i].GetReadPoint() + " " + MyTags[i].GetRSSI().ToString();
-                            Console.WriteLine(s);
-
-                            using (System.IO.StreamWriter file =
-                                new System.IO.StreamWriter(AppDomain.CurrentDomain.BaseDirectory + "output" + DateTime.Now.ToString("d-M-yyyy") + ".txt", true))
-                            {
-                                file.WriteLine(s);
-                            }
-                        }
-                    }
-                    if (MyTags2 != null)
-                    {
-                        for (int i = 0; i < MyTags2.Length; i++)
-                        {
-                            byte[] data = FromHex(BitConverter.ToString(MyTags2[i].GetId()));
-                            String s = Encoding.ASCII.GetString(data) + " " + DateTime.Now.ToString("h:mm:ss") + " " + MyTags2[i].GetReadPoint() + " " + MyTags2[i].GetRSSI();
-                            Console.WriteLine(s);
-
-                            using (System.IO.StreamWriter file =
-                                new System.IO.StreamWriter(AppDomain.CurrentDomain.BaseDirectory + "output" + DateTime.Now.ToString("d-M-yyyy") + ".txt", true))
-                            {
-                                file.WriteLine(s);
-                            }
-                        }
-                    }
-                }
-            } while (Console.ReadKey(true).Key != ConsoleKey.Escape);
-
-            MyReader.Disconnect();
-        }
-
-        public static byte[] FromHex(string hex)
-        {
-            hex = hex.Replace("-", "");
-            byte[] raw = new byte[hex.Length / 2];
-            for (int i = 0; i < raw.Length; i++)
-            {
-                raw[i] = Convert.ToByte(hex.Substring(i * 2, 2), 16);
-            }
-            return raw;
-        }
+      myReader.Connect(CAENRFIDPort.CAENRFID_TCP, readerIP);
+      mySource = myReader.GetSource("Source_0");
+      mySource2 = myReader.GetSource("Source_1");
     }
+
+    // Update the lists of tags.
+    void Update()
+    {
+      myTags = mySource.InventoryTag();
+      myTags2 = mySource2.InventoryTag();
+    }
+
+    // Ronseal.
+    void AddToPrintout(String s)
+    {
+      using(System.IO.StreamWriter file =
+        new System.IO.StreamWriter(
+          AppDomain.CurrentDomain.BaseDirectory+printoutFilename, true))
+      {
+        file.WriteLine(s);
+      }
+    }
+
+    // Take an array of RFID tag objects, and print something human-readable
+    // to the screen and to a file.
+    void HandleTagArray(CAENRFIDTag[] tagArray)
+    {
+      byte[] data;
+      String s;
+
+      if(tagArray == null) return;
+
+      for(int i = 0; i < myTags.Length; i++)
+      {
+        data = FromHex(BitConverter.ToString(myTags[i].GetId()));
+        s = ParseEPC(data)+" "+
+            DateTime.Now.ToString("h:mm:ss")+" "+myTags[i].GetReadPoint()+
+            " "+myTags[i].GetRSSI().ToString();
+        Console.WriteLine(s);
+        AddToPrintout(s);
+      }
+    }
+
+    /********************
+    ** RUN AND WRAP UP **
+    ********************/
+
+    // Let's get going!
+    void Run()
+    {
+      Initialise();
+
+      Console.WriteLine("Press ESC to stop.");
+      do
+      {
+        while(!Console.KeyAvailable)
+        {
+          Update();
+          HandleTagArray(myTags);
+          HandleTagArray(myTags2);
+        }
+      } while(Console.ReadKey(true).Key != ConsoleKey.Escape);
+
+      myReader.Disconnect();
+    }
+
+    // This is where it all begins.
+    static void Main(string[] args)
+    {
+      Program program = new Program();
+      program.Run();
+    }
+
+    /*******************
+    ** STATIC METHODS **
+    *******************/
+
+    // Interpret the binary for a tag's EPC into something sensible.
+    static String ParseEPC(byte[] data)
+    {
+      String result = Encoding.ASCII.GetString(data);
+
+      for(int i = 0; i < result.Length; i++)
+      {
+        if((result[i] < ' ') || (result[i] > '~'))
+        {
+          if(result[i] == '\0') continue;
+          else return "unprintable_epc";
+        }
+      }
+
+      return result;
+    }
+
+    // I'll fill in this comment when I know what this method does!
+    static byte[] FromHex(string hex)
+    {
+      hex = hex.Replace("-", "");
+      byte[] raw = new byte[hex.Length/2];
+
+      for(int i = 0; i < raw.Length; i++)
+      {
+        raw[i] = Convert.ToByte(hex.Substring(i*2, 2), 16);
+      }
+
+      return raw;
+    }
+  }
 }
