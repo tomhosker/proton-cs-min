@@ -2,6 +2,15 @@
 This code defines a namespace, which produces a program, which reads data
 from a Proton RFID reader, and prints it both to the screen and to a plain
 text file.
+
+Change this line beginning "myReader.Connect(..." to change between ETHERNET
+and SERIAL configurations.
+
+This is the SERIAL version:
+
+    myReader.Connect(CAENRFIDPort.CAENRFID_RS232, readerPort);
+
+See the SDK manual for the ETHERNET version.
 */
 
 // Imports.
