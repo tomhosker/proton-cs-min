@@ -24,6 +24,7 @@ namespace ConsoleApplication1
 
     // Constants.
     const String readerIP = "192.168.0.2";
+    const String readerPort = "/dev/ttyUSB0";
 
     private CAENRFIDReader myReader = new CAENRFIDReader();
     private CAENRFIDLogicalSource mySource;
@@ -40,7 +41,7 @@ namespace ConsoleApplication1
     // Set up myReader, mySource and mySource2.
     void Initialise()
     {
-      myReader.Connect(CAENRFIDPort.CAENRFID_TCP, readerIP);
+      myReader.Connect(CAENRFIDPort.CAENRFID_RS232, readerPort);
       mySource = myReader.GetSource("Source_0");
       mySource2 = myReader.GetSource("Source_1");
     }
