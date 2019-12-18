@@ -2,15 +2,6 @@
 This code defines a namespace, which produces a program, which reads data
 from a Proton RFID reader, and prints it both to the screen and to a plain
 text file.
-
-Change this line beginning "myReader.Connect(..." to change between ETHERNET
-and SERIAL configurations.
-
-This is the SERIAL version:
-
-    myReader.Connect(CAENRFIDPort.CAENRFID_RS232, readerPort);
-
-See the SDK manual for the ETHERNET version.
 */
 
 // Imports.
@@ -25,7 +16,7 @@ using com.caen.RFIDLibrary;
 namespace ConsoleApplication1
 {
   // The class in question.
-  class Program
+  class ProgramUSB
   {
     /***********
     ** FIELDS **
@@ -119,7 +110,7 @@ namespace ConsoleApplication1
     // This is where it all begins.
     static void Main(string[] args)
     {
-      Program program = new Program();
+      ProgramUSB program = new ProgramUSB();
       program.Run();
     }
 
