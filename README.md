@@ -14,4 +14,4 @@ This is **minimal program for getting data from the Proton RFID reader using C#*
 
 ### Run
 
-1. Run "./Program.exe".
+1. Run either "./ProgramEthernet.exe" or "./ProgramUSB.exe", as required.
