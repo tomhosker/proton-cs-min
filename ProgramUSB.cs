@@ -24,7 +24,7 @@ namespace ConsoleApplication1
 
     // Constants.
     const String readerIP = "192.168.0.2";
-    const String readerPort = "/dev/ttyUSB0";
+    const String readerPort = "COM3";
 
     private CAENRFIDReader myReader = new CAENRFIDReader();
     private CAENRFIDLogicalSource mySource;

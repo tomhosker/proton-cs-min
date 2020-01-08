@@ -23,16 +23,27 @@ namespace ConsoleApplication1
     ***********/
 
     // Constants.
-    const String readerIP = "192.168.0.2";
+    const String readerIP = "192.168.1.2";
     const String readerPort = "/dev/ttyUSB0";
 
     private CAENRFIDReader myReader = new CAENRFIDReader();
     private CAENRFIDLogicalSource mySource;
-    private CAENRFIDLogicalSource mySource2;
     private CAENRFIDTag[] myTags;
-    private CAENRFIDTag[] myTags2;
     private String printoutFilename =
       "output"+DateTime.Now.ToString("d-M-yyyy")+".txt";
+
+    // Antennae. Mark true A/R.
+    private bool ant0 = true;
+    private bool ant1 = false;
+    private bool ant2 = true;
+    private bool ant3 = false;
+
+    /*
+    #########################
+    # ANT0 ######## ANT2 ####
+    #### ANT1 ######## ANT3 #
+    #########################
+    */
 
     /*****************
     ** CORE METHODS **
@@ -43,14 +54,16 @@ namespace ConsoleApplication1
     {
       myReader.Connect(CAENRFIDPort.CAENRFID_TCP, readerIP);
       mySource = myReader.GetSource("Source_0");
-      mySource2 = myReader.GetSource("Source_1");
+      if(ant0) mySource.AddReadPoint("Ant0");
+      if(ant1) mySource.AddReadPoint("Ant1");
+      if(ant2) mySource.AddReadPoint("Ant2");
+      if(ant3) mySource.AddReadPoint("Ant3");
     }
 
     // Update the lists of tags.
     void Update()
     {
       myTags = mySource.InventoryTag();
-      myTags2 = mySource2.InventoryTag();
     }
 
     // Ronseal.
@@ -100,7 +113,6 @@ namespace ConsoleApplication1
         {
           Update();
           HandleTagArray(myTags);
-          HandleTagArray(myTags2);
         }
       } while(Console.ReadKey(true).Key != ConsoleKey.Escape);
 
